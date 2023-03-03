@@ -3,13 +3,13 @@ use std::io;
 use std::time::{Duration, Instant};
 
 use ncurses::*;
+
 use crate::event_handler::{on_backspace, on_keypress};
+use crate::words::show_words;
+use crate::words::Status::Unmark;
 
-use crate::words::{show_words};
-
-mod words;
 mod event_handler;
-
+mod words;
 
 enum ColorsPair {
     White = 1,
@@ -17,7 +17,6 @@ enum ColorsPair {
     Red = 3,
     RedSpace = 4,
 }
-
 
 fn init_ncurses() {
     initscr();
@@ -34,14 +33,14 @@ fn init_ncurses() {
 #[derive(Default)]
 pub struct CursorPosition {
     x: usize,
-    line_position: usize
+    line_position: usize,
 }
 impl CursorPosition {
-   pub fn new() -> Self {
-       Self {
-           ..Default::default()
-       }
-   }
+    pub fn new() -> Self {
+        Self {
+            ..Default::default()
+        }
+    }
 }
 fn main() {
     init_ncurses();
@@ -54,7 +53,7 @@ fn main() {
     let mut all_letter_pressed = 0;
 
     show_words(&words, &mut pos);
-    while now.elapsed() < Duration::from_secs(timeframe_in_secs) || !did_start_typing{
+    while now.elapsed() < Duration::from_secs(timeframe_in_secs) || !did_start_typing {
         refresh();
         let c = getch();
         if c != ERR {
@@ -68,10 +67,19 @@ fn main() {
             }
 
             let mut did_mark_letter = false;
-            for word in &mut words {
+            for i in 0..words.len() {
+                let word = &mut words[i];
                 // 127 is backspace
                 if c as u8 == 127 {
-                    on_backspace(word, &mut pos)
+                    if word.completed {
+                        continue;
+                    }
+                    if !on_backspace(word, &mut pos) && i != 0 {
+                        words[i - 1].letters.last_mut().unwrap().status = Unmark;
+                        words[i - 1].completed = false;
+                        pos.x -= 1;
+                    }
+                    break;
                 } else if on_keypress(
                     word,
                     c,
