@@ -69,12 +69,14 @@ fn main() {
             let mut did_mark_letter = false;
             for i in 0..words.len() {
                 let word = &mut words[i];
+                if word.completed {
+                    continue;
+                }
                 // 127 is backspace
                 if c as u8 == 127 {
-                    if word.completed {
-                        continue;
-                    }
+                    // If on_backspace return false we have to modify word before him
                     if !on_backspace(word, &mut pos) && i != 0 {
+                        // words[i - 1] always is a space char
                         words[i - 1].letters.last_mut().unwrap().status = Unmark;
                         words[i - 1].completed = false;
                         pos.x -= 1;

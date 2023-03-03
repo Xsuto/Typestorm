@@ -25,9 +25,6 @@ pub fn on_keypress(
     if *did_mark_letter {
         return true;
     }
-    if word.completed {
-        return false;
-    }
     for letter in &mut word.letters {
         if letter.status == Unmark && letter.current_letter == c {
             letter.status = Correct;
