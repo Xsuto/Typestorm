@@ -1000,7 +1000,7 @@ pub fn shuffle_and_get_words() -> Vec<Word> {
     unsafe {
         WORDS.shuffle(&mut rand::thread_rng());
     }
-    Vec::from(unsafe { WORDS }.map(|it| {
+    unsafe { WORDS }.iter().filter(|it| it.len() < 7 && it.len() >= 3).map(|it| {
         let mut letters = it
             .chars()
             .map(|letter| Letter {
@@ -1016,7 +1016,7 @@ pub fn shuffle_and_get_words() -> Vec<Word> {
             completed: false,
             letters,
         }
-    }))
+    }).collect::<Vec<Word>>()
 }
 
 fn word_in_green(word: char) {
