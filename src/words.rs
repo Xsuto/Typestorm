@@ -997,11 +997,11 @@ pub struct Word {
     pub completed: bool,
 }
 
-pub fn shuffle_and_get_words() -> LinkedList<Word> {
+pub fn shuffle_and_get_words() -> Vec<Word> {
     unsafe {
         WORDS.shuffle(&mut rand::thread_rng());
     }
-    LinkedList::from(unsafe { WORDS }.map(|it| {
+    Vec::from(unsafe { WORDS }.map(|it| {
         let mut letters = it
             .chars()
             .map(|letter| Letter {
@@ -1038,7 +1038,7 @@ fn word_in_red(word: char) {
     attron(COLOR_PAIR(ColorsPair::White as i16));
 }
 
-pub fn show_words(words: &LinkedList<Word>, pos: &mut CursorPosition) {
+pub fn show_words(words: &Vec<Word>, pos: &mut CursorPosition) {
     let it = words.iter().filter(|it| it.completed).count() / 10;
 
     if it != pos.line_position {
