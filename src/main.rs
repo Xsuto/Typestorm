@@ -31,12 +31,23 @@ fn init_ncurses() {
     init_pair(ColorsPair::Red as i16, COLOR_RED, COLOR_BLACK);
     init_pair(ColorsPair::RedSpace as i16, COLOR_RED, COLOR_RED);
 }
-
+#[derive(Default)]
+pub struct CursorPosition {
+    x: usize,
+    line_position: usize
+}
+impl CursorPosition {
+   pub fn new() -> Self {
+       Self {
+           ..Default::default()
+       }
+   }
+}
 fn main() {
     init_ncurses();
     let timeframe_in_secs = 15;
     let mut words = words::shuffle_and_get_words();
-    let mut pos = 0;
+    let mut pos = CursorPosition::new();
     let mut now = Instant::now();
     let mut did_start_typing = false;
     let mut correctly_pressed_letters = 0;

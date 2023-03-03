@@ -3,7 +3,7 @@ use std::collections::LinkedList;
 use ncurses::{addstr, attron, refresh, stdscr, wmove, COLOR_PAIR};
 use rand::seq::SliceRandom;
 
-use crate::ColorsPair;
+use crate::{ColorsPair, CursorPosition};
 
 pub type WordsType = [&'static str; 969];
 
@@ -978,7 +978,6 @@ pub static mut WORDS: WordsType = [
     "shoes",
     "entry",
 ];
-static mut LINE_NUMBER: usize = 0;
 
 #[derive(PartialEq, Debug)]
 pub enum Status {
@@ -1039,13 +1038,12 @@ fn word_in_red(word: char) {
     attron(COLOR_PAIR(ColorsPair::White as i16));
 }
 
-pub fn show_words(words: &LinkedList<Word>, pos: &mut i32) {
+pub fn show_words(words: &LinkedList<Word>, pos: &mut CursorPosition) {
     let it = words.iter().filter(|it| it.completed).count() / 10;
 
-    // SAFETY: User will not overflow usize with numbers of line completed
-    if it != unsafe { LINE_NUMBER } {
-        unsafe { LINE_NUMBER = it };
-        *pos = 0;
+    if it != pos.line_position {
+        pos.line_position = it;
+        pos.x = 0;
     }
 
     for word in words
@@ -1068,6 +1066,6 @@ pub fn show_words(words: &LinkedList<Word>, pos: &mut i32) {
             }
         }
     }
-    wmove(stdscr(), 0, *pos);
+    wmove(stdscr(), 0, pos.x as i32);
     refresh();
 }
