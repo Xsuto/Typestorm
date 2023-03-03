@@ -1,14 +1,11 @@
-use std::collections::LinkedList;
 #[allow(unused, dead_code)]
 use std::io;
 use std::time::{Duration, Instant};
 
-use ncurses::LcCategory::all;
 use ncurses::*;
 use crate::event_handler::{on_backspace, on_keypress};
 
-use crate::words::Status::{Correct, Unmark, Wrong};
-use crate::words::{show_words, Word};
+use crate::words::{show_words};
 
 mod words;
 mod event_handler;
@@ -52,12 +49,16 @@ fn main() {
         if c != ERR {
             clear();
             let c = c as u8 as char;
+
+            // Start measuring time on first keypress
             if !did_start_typing {
                 now = Instant::now();
                 did_start_typing = true;
             }
+
             let mut did_mark_letter = false;
             for word in &mut words {
+                // 127 is backspace
                 if c as u8 == 127 {
                     on_backspace(word, &mut pos)
                 } else if on_keypress(
