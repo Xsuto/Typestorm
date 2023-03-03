@@ -1,9 +1,8 @@
-use std::collections::LinkedList;
-
-use ncurses::{addstr, attron, refresh, stdscr, wmove, COLOR_PAIR};
+use ncurses::{addstr, attron, refresh, COLOR_PAIR};
 use rand::seq::SliceRandom;
 
-use crate::{ColorsPair, CursorPosition};
+use crate::cursor_position::CursorPosition;
+use crate::ColorsPair;
 
 pub type WordsType = [&'static str; 969];
 
@@ -1041,7 +1040,7 @@ fn word_in_red(word: char) {
 pub fn show_words(words: &Vec<Word>, pos: &mut CursorPosition) {
     let it = words.iter().filter(|it| it.completed).count() / 10;
 
-    if it != pos.line_position {
+    if it != pos.get_line_position() {
         pos.move_to_new_line();
     }
 
@@ -1065,6 +1064,6 @@ pub fn show_words(words: &Vec<Word>, pos: &mut CursorPosition) {
             }
         }
     }
-    wmove(stdscr(), 0, pos.x as i32);
+    pos.display();
     refresh();
 }

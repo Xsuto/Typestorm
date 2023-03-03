@@ -1,16 +1,16 @@
+use crate::cursor_position::CursorPosition;
 use crate::words::Status::{Correct, Unmark, Wrong};
 use crate::words::Word;
-use crate::CursorPosition;
 
 pub fn on_backspace(word: &mut Word, pos: &mut CursorPosition) -> bool {
     let mut done = false;
     for letter in word.letters.iter_mut().rev() {
-       if letter.status == Correct || letter.status == Wrong {
-          done = true;
-          letter.status = Unmark;
-          pos.move_left();
-          break;
-       }
+        if letter.status == Correct || letter.status == Wrong {
+            done = true;
+            letter.status = Unmark;
+            pos.move_left();
+            break;
+        }
     }
     done
 }
