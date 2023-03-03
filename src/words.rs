@@ -1042,8 +1042,7 @@ pub fn show_words(words: &Vec<Word>, pos: &mut CursorPosition) {
     let it = words.iter().filter(|it| it.completed).count() / 10;
 
     if it != pos.line_position {
-        pos.line_position = it;
-        pos.x = 0;
+        pos.move_to_new_line();
     }
 
     for word in words

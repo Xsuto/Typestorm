@@ -8,7 +8,7 @@ pub fn on_backspace(word: &mut Word, pos: &mut CursorPosition) -> bool {
        if letter.status == Correct || letter.status == Wrong {
           done = true;
           letter.status = Unmark;
-          pos.x -= 1;
+          pos.move_left();
           break;
        }
     }
@@ -40,7 +40,7 @@ pub fn on_keypress(
             break;
         }
     }
-    pos.x += 1;
+    pos.move_right();
 
     if word
         .letters
