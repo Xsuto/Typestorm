@@ -77,7 +77,18 @@ fn main() {
                         }
                     }
                     break;
-                } else if on_keypress(
+                }
+                // 9 == Tab Reset
+                else if c as u8 == 9 {
+                    words = words::shuffle_and_get_words();
+                    did_start_typing = false;
+                    now = Instant::now();
+                    pos = CursorPosition::new();
+                    correctly_pressed_letters = 0;
+                    all_letter_pressed = 0;
+                    break;
+                }
+                else if on_keypress(
                     word,
                     c,
                     &mut did_mark_letter,
@@ -106,7 +117,7 @@ fn main() {
     );
     println!(
         "WPM {}",
-        ((all_letter_pressed as f64 / average_word_length as f64)
-            / (timeframe_in_secs as f64 / 60 as f64)) as i64
+        ((all_letter_pressed as f64 / average_word_length)
+            / (timeframe_in_secs as f64 / 60.0 )) as i64
     );
 }
