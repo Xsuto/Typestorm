@@ -1,5 +1,3 @@
-#[allow(unused, dead_code)]
-use std::io;
 use std::time::{Duration, Instant};
 
 use ncurses::*;
@@ -11,6 +9,7 @@ use crate::words::Status::Unmark;
 
 mod cursor_position;
 mod event_handler;
+mod english_words;
 mod words;
 
 enum ColorsPair {
@@ -67,7 +66,6 @@ fn main() {
                 if c as u8 == 127 {
                     // If on_backspace return false we have to modify word before him
                     if !on_backspace(word, &mut pos) && i != 0 {
-                        // words[i - 1] always is a space char
                         words[i - 1].letters.last_mut().unwrap().status = Unmark;
                         words[i - 1].completed = false;
                         if pos.get_x() == 0 {
