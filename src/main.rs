@@ -1,6 +1,7 @@
 use std::time::{Duration, Instant};
 
 use ncurses::*;
+use clap::Parser;
 
 use crate::cursor_position::CursorPosition;
 use crate::event_handler::{on_backspace, on_keypress};
@@ -32,9 +33,17 @@ fn init_ncurses() {
     init_pair(ColorsPair::RedSpace as i16, COLOR_RED, COLOR_RED);
 }
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, default_value_t = 60)]
+    timeframe: u64,
+}
+
 fn main() {
+    let args = Args::parse();
     init_ncurses();
-    let timeframe_in_secs = 15;
+    let timeframe_in_secs = args.timeframe;
     let mut words = words::shuffle_and_get_words();
     let mut pos = CursorPosition::new();
     let mut now = Instant::now();
