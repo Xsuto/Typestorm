@@ -3,16 +3,14 @@ use crate::words::Status::{Correct, Unmark, Wrong};
 use crate::words::Word;
 
 pub fn on_backspace(word: &mut Word, pos: &mut CursorPosition) -> bool {
-    let mut done = false;
     for letter in word.letters.iter_mut().rev() {
         if letter.status == Correct || letter.status == Wrong {
-            done = true;
             letter.status = Unmark;
             pos.move_left();
-            break;
+            return true;
         }
     }
-    done
+    false
 }
 pub fn on_keypress(
     word: &mut Word,
