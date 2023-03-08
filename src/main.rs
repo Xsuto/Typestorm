@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
-use ncurses::*;
 use clap::Parser;
+use ncurses::*;
 
 use crate::cursor_position::CursorPosition;
 use crate::event_handler::{on_backspace, on_keypress};
@@ -9,8 +9,9 @@ use crate::words::show_words;
 use crate::words::Status::Unmark;
 
 mod cursor_position;
-mod event_handler;
+mod english1k_words;
 mod english_words;
+mod event_handler;
 mod words;
 
 enum ColorsPair {
@@ -33,18 +34,34 @@ fn init_ncurses() {
     init_pair(ColorsPair::RedSpace as i16, COLOR_RED, COLOR_RED);
 }
 
-#[derive(Parser, Debug)]
+#[derive(clap::ValueEnum, Clone)]
+pub enum WordsList {
+    English,
+    English1k,
+}
+
+#[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     #[arg(short, long, default_value_t = 60)]
     timeframe: u64,
+
+    #[arg(long = "max", default_value_t = 1000)]
+    max_word_length: usize,
+
+    #[arg(long = "min", default_value_t = 0)]
+    min_word_length: usize,
+
+    #[arg(short,long,value_enum, default_value_t = WordsList::English)]
+    words_list: WordsList,
 }
 
 fn main() {
     let args = Args::parse();
     init_ncurses();
     let timeframe_in_secs = args.timeframe;
-    let mut words = words::shuffle_and_get_words();
+    let mut words =
+        words::shuffle_and_get_words(&args.words_list, args.min_word_length, args.max_word_length);
     let mut pos = CursorPosition::new();
     let mut now = Instant::now();
     let mut did_start_typing = false;
@@ -87,15 +104,18 @@ fn main() {
                 }
                 // 9 == Tab Reset
                 else if c as u8 == 9 {
-                    words = words::shuffle_and_get_words();
+                    words = words::shuffle_and_get_words(
+                        &args.words_list,
+                        args.min_word_length,
+                        args.max_word_length,
+                    );
                     did_start_typing = false;
                     now = Instant::now();
                     pos = CursorPosition::new();
                     correctly_pressed_letters = 0;
                     all_letter_pressed = 0;
                     break;
-                }
-                else if on_keypress(
+                } else if on_keypress(
                     word,
                     c,
                     &mut did_mark_letter,
@@ -124,7 +144,7 @@ fn main() {
     );
     println!(
         "WPM {}",
-        ((all_letter_pressed as f64 / average_word_length)
-            / (timeframe_in_secs as f64 / 60.0 )) as i64
+        ((all_letter_pressed as f64 / average_word_length) / (timeframe_in_secs as f64 / 60.0))
+            as i64
     );
 }

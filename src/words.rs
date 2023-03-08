@@ -2,9 +2,7 @@ use ncurses::{addstr, attron, refresh, COLOR_PAIR};
 use rand::seq::SliceRandom;
 
 use crate::cursor_position::CursorPosition;
-use crate::ColorsPair;
-use crate::english_words::WORDS;
-
+use crate::{ColorsPair, WordsList};
 
 #[derive(PartialEq, Debug)]
 pub enum Status {
@@ -24,27 +22,37 @@ pub struct Word {
     pub completed: bool,
 }
 
-pub fn shuffle_and_get_words() -> Vec<Word> {
-    unsafe {
-        WORDS.shuffle(&mut rand::thread_rng());
-    }
-    unsafe { WORDS }.iter().filter(|it| it.len() < 7 && it.len() >= 3).map(|it| {
-        let mut letters = it
-            .chars()
-            .map(|letter| Letter {
-                current_letter: letter,
+pub fn shuffle_and_get_words(
+    words_list: &WordsList,
+    min_word_length: usize,
+    max_word_length: usize,
+) -> Vec<Word> {
+    let mut words = match words_list {
+        WordsList::English => Vec::from(crate::english_words::WORDS),
+        WordsList::English1k => Vec::from(crate::english1k_words::WORDS),
+    };
+    words.shuffle(&mut rand::thread_rng());
+    words
+        .iter()
+        .filter(|it| it.len() < max_word_length && it.len() >= min_word_length)
+        .map(|it| {
+            let mut letters = it
+                .chars()
+                .map(|letter| Letter {
+                    current_letter: letter,
+                    status: Status::Unmark,
+                })
+                .collect::<Vec<Letter>>();
+            letters.push(Letter {
+                current_letter: ' ',
                 status: Status::Unmark,
-            })
-            .collect::<Vec<Letter>>();
-        letters.push(Letter {
-            current_letter: ' ',
-            status: Status::Unmark,
-        });
-        Word {
-            completed: false,
-            letters,
-        }
-    }).collect::<Vec<Word>>()
+            });
+            Word {
+                completed: false,
+                letters,
+            }
+        })
+        .collect::<Vec<Word>>()
 }
 
 fn word_in_green(word: char) {
