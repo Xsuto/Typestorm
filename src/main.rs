@@ -62,13 +62,13 @@ fn main() {
     let timeframe_in_secs = args.timeframe;
     let mut words =
         words::shuffle_and_get_words(&args.words_list, args.min_word_length, args.max_word_length);
-    let mut pos = CursorPosition::new();
+    let mut cursor = CursorPosition::new();
     let mut now = Instant::now();
     let mut did_start_typing = false;
     let mut correctly_pressed_letters = 0;
     let mut all_letter_pressed = 0;
 
-    show_words(&words, &mut pos);
+    show_words(&words, &mut cursor);
     while now.elapsed() < Duration::from_secs(timeframe_in_secs) || !did_start_typing {
         refresh();
         let c = getch();
@@ -91,13 +91,13 @@ fn main() {
                 // 127 is backspace
                 if c as u8 == 127 {
                     // If on_backspace return false we have to modify word before him
-                    if !on_backspace(word, &mut pos) && i != 0 {
+                    if !on_backspace(word, &mut cursor) && i != 0 {
                         words[i - 1].letters.last_mut().unwrap().status = Unmark;
                         words[i - 1].completed = false;
-                        if pos.get_x() == 0 {
-                            pos.go_back_to_old_line();
+                        if cursor.get_x() == 0 {
+                            cursor.go_back_to_old_line();
                         } else {
-                            pos.move_left();
+                            cursor.move_left();
                         }
                     }
                     break;
@@ -111,7 +111,7 @@ fn main() {
                     );
                     did_start_typing = false;
                     now = Instant::now();
-                    pos = CursorPosition::new();
+                    cursor = CursorPosition::new();
                     correctly_pressed_letters = 0;
                     all_letter_pressed = 0;
                     break;
@@ -119,14 +119,14 @@ fn main() {
                     word,
                     c,
                     &mut did_mark_letter,
-                    &mut pos,
+                    &mut cursor,
                     &mut correctly_pressed_letters,
                     &mut all_letter_pressed,
                 ) {
                     break;
                 }
             }
-            show_words(&words, &mut pos);
+            show_words(&words, &mut cursor);
         }
     }
     // Cleanup ncurses

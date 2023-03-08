@@ -2,11 +2,11 @@ use crate::cursor_position::CursorPosition;
 use crate::words::Status::{Correct, Unmark, Wrong};
 use crate::words::Word;
 
-pub fn on_backspace(word: &mut Word, pos: &mut CursorPosition) -> bool {
+pub fn on_backspace(word: &mut Word, cursor: &mut CursorPosition) -> bool {
     for letter in word.letters.iter_mut().rev() {
         if letter.status == Correct || letter.status == Wrong {
             letter.status = Unmark;
-            pos.move_left();
+            cursor.move_left();
             return true;
         }
     }
@@ -16,7 +16,7 @@ pub fn on_keypress(
     word: &mut Word,
     c: char,
     did_mark_letter: &mut bool,
-    pos: &mut CursorPosition,
+    cursor: &mut CursorPosition,
     correctly_pressed_letters: &mut i32,
     all_letter_pressed: &mut i32,
 ) -> bool {
@@ -38,7 +38,7 @@ pub fn on_keypress(
             break;
         }
     }
-    pos.move_right();
+    cursor.move_right();
 
     if word
         .letters

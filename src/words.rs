@@ -73,11 +73,11 @@ fn word_in_red(word: char) {
     attron(COLOR_PAIR(ColorsPair::White as i16));
 }
 
-pub fn show_words(words: &[Word], pos: &mut CursorPosition) {
+pub fn show_words(words: &[Word], cursor: &mut CursorPosition) {
     let it = words.iter().filter(|it| it.completed).count() / 10;
 
-    if it != pos.get_line_position() {
-        pos.move_to_new_line();
+    if it != cursor.get_line_position() {
+        cursor.move_to_new_line();
     }
 
     for word in words
@@ -100,6 +100,6 @@ pub fn show_words(words: &[Word], pos: &mut CursorPosition) {
             }
         }
     }
-    pos.display();
+    cursor.display();
     refresh();
 }
