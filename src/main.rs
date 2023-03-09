@@ -7,6 +7,7 @@ use terminal_size::terminal_size;
 use crate::cursor_position::CursorPosition;
 use crate::event_handler::{on_backspace, on_keypress};
 use crate::words::Status::Unmark;
+use crate::words::{shuffle_and_get_words, Words};
 
 mod cursor_position;
 mod english1k_words;
@@ -54,104 +55,128 @@ struct Args {
 
     #[arg(short,long,value_enum, default_value_t = WordsList::English)]
     words_list: WordsList,
+
+    #[arg(long, default_value_t = 4)]
+    margin: usize,
 }
+
+struct AppState {
+    args: Args,
+    words: Words,
+    did_start_typing: bool,
+    now: Instant,
+    cursor: CursorPosition,
+    correctly_pressed_letters: usize,
+    all_letter_pressed: usize,
+    terminal_width: usize,
+}
+impl AppState {
+    fn new(args: Args, terminal_width: usize) -> Self {
+        Self {
+            words: shuffle_and_get_words(
+                &args.words_list,
+                args.min_word_length,
+                args.max_word_length,
+                terminal_width,
+            ),
+            did_start_typing: false,
+            now: Instant::now(),
+            cursor: CursorPosition::new(args.margin),
+            correctly_pressed_letters: 0,
+            all_letter_pressed: 0,
+            terminal_width,
+            args,
+        }
+    }
+    fn reset(&mut self) {
+        self.words = shuffle_and_get_words(
+            &self.args.words_list,
+            self.args.min_word_length,
+            self.args.max_word_length,
+            self.terminal_width,
+        );
+        self.did_start_typing = false;
+        self.now = Instant::now();
+        self.cursor = CursorPosition::new(self.args.margin);
+        self.correctly_pressed_letters = 0;
+        self.all_letter_pressed = 0;
+    }
+}
+
 
 fn main() {
     let args = Args::parse();
-    init_ncurses();
-    let timeframe_in_secs = args.timeframe;
     let terminal_width = terminal_size().unwrap().0 .0;
-    let margin = 4;
-    let mut words = words::shuffle_and_get_words(
-        &args.words_list,
-        args.min_word_length,
-        args.max_word_length,
-        terminal_width as usize,
-    );
-    let mut cursor = CursorPosition::new(margin);
-    let mut now = Instant::now();
-    let mut did_start_typing = false;
-    let mut correctly_pressed_letters = 0;
-    let mut all_letter_pressed = 0;
-
-    words.show_words(&mut cursor, terminal_width as usize);
-    refresh();
-    while now.elapsed() < Duration::from_secs(timeframe_in_secs) || !did_start_typing {
+    let timeframe_in_secs = args.timeframe;
+    let mut state = AppState::new(args,terminal_width as usize);
+    init_ncurses();
+    state.words.show_words(&mut state.cursor, terminal_width as usize);
+    while state.now.elapsed() < Duration::from_secs(timeframe_in_secs) || !state.did_start_typing {
         let c = getch();
         if c != ERR {
             clear();
             let c = c as u8 as char;
 
             // Start measuring time on first keypress
-            if !did_start_typing {
-                now = Instant::now();
-                did_start_typing = true;
+            if !state.did_start_typing {
+                state.now = Instant::now();
+                state.did_start_typing = true;
             }
 
             let mut did_mark_letter = false;
-            for i in 0..words.data.len() {
-                let word = &mut words.data[i];
+            for i in 0..state.words.data.len() {
+                let word = &mut state.words.data[i];
                 if word.completed {
                     continue;
                 }
                 // 127 is backspace
                 if c as u8 == 127 {
                     // If on_backspace return false we have to modify word before him
-                    if !on_backspace(word, &mut cursor) && i != 0 {
-                        words.data[i - 1].letters.last_mut().unwrap().status = Unmark;
-                        words.data[i - 1].completed = false;
-                        if cursor.get_x() == 0 {
-                            cursor.go_back_to_old_line();
+                    if !on_backspace(word, &mut state.cursor) && i != 0 {
+                        state.words.data[i - 1].letters.last_mut().unwrap().status = Unmark;
+                        state.words.data[i - 1].completed = false;
+                        if state.cursor.get_x() == 0 {
+                            state.cursor.go_back_to_old_line();
                         } else {
-                            cursor.move_left();
+                            state.cursor.move_left();
                         }
                     }
                     break;
                 }
                 // 9 == Tab Reset
                 else if c as u8 == 9 {
-                    words = words::shuffle_and_get_words(
-                        &args.words_list,
-                        args.min_word_length,
-                        args.max_word_length,
-                        terminal_width as usize,
-                    );
-                    did_start_typing = false;
-                    now = Instant::now();
-                    cursor = CursorPosition::new(margin);
-                    correctly_pressed_letters = 0;
-                    all_letter_pressed = 0;
+                    state.reset();
                     break;
                 } else if on_keypress(
                     word,
                     c,
                     &mut did_mark_letter,
-                    &mut cursor,
-                    &mut correctly_pressed_letters,
-                    &mut all_letter_pressed,
+                    &mut state.cursor,
+                    &mut state.correctly_pressed_letters,
+                    &mut state.all_letter_pressed,
                 ) {
                     break;
                 }
             }
-            words.show_words(&mut cursor, terminal_width as usize);
+            state.words.show_words(&mut state.cursor, terminal_width as usize);
         }
     }
     endwin();
 
-    let average_word_length = words
+    let average_word_length = state.words
         .data
         .iter()
         .filter(|it| it.completed)
         .map(|it| it.letters.len())
         .sum::<usize>() as f64
-        / words.data.iter().filter(|it| it.completed).count() as f64;
+        / state.words.data.iter().filter(|it| it.completed).count() as f64;
     println!(
         "Accuracy {}%",
-        ((correctly_pressed_letters as f64 / all_letter_pressed as f64) * 100.0) as i64
+        ((state.correctly_pressed_letters as f64 / state.all_letter_pressed as f64) * 100.0) as i64
     );
     println!(
         "WPM {}",
-        ((all_letter_pressed as f64 / average_word_length) / (timeframe_in_secs as f64 / 60.0))
+        ((state.all_letter_pressed as f64 / average_word_length) / (timeframe_in_secs as f64 / 60.0))
             as i64
     );
 }
