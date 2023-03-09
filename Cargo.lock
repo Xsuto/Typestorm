@@ -3,6 +3,16 @@
 version = 3
 
 [[package]]
+name = "Typestorm"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "ncurses",
+ "rand",
+ "terminal_size",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -290,16 +300,6 @@ checksum = "4c9afddd2cec1c0909f06b00ef33f94ab2cc0578c4a610aa208ddfec8aa2b43a"
 dependencies = [
  "rustix",
  "windows-sys",
-]
-
-[[package]]
-name = "typing-cli"
-version = "0.1.0"
-dependencies = [
- "clap",
- "ncurses",
- "rand",
- "terminal_size",
 ]
 
 [[package]]
