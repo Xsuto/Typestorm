@@ -5,11 +5,14 @@ pub struct CursorPosition {
     x: usize,
     line_position: usize,
     previous_line_x: Vec<usize>,
+    offset: usize,
 }
 
 impl CursorPosition {
-    pub fn new() -> Self {
+    pub fn new(offset: usize) -> Self {
         Self {
+            x: offset,
+            offset,
             ..Default::default()
         }
     }
@@ -20,7 +23,6 @@ impl CursorPosition {
         self.x
     }
     pub fn move_left(&mut self) {
-        assert_ne!(self.x,0);
         self.x -= 1;
     }
     pub fn move_right(&mut self) {
@@ -29,7 +31,7 @@ impl CursorPosition {
     pub fn move_to_new_line(&mut self) {
         self.previous_line_x.push(self.x - 1);
         self.line_position += 1;
-        self.x = 0;
+        self.x = self.offset;
     }
     pub fn go_back_to_old_line(&mut self) {
         assert_ne!(self.line_position, 0);
