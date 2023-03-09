@@ -2,10 +2,10 @@ use std::time::{Duration, Instant};
 
 use clap::Parser;
 use ncurses::*;
+use terminal_size::terminal_size;
 
 use crate::cursor_position::CursorPosition;
 use crate::event_handler::{on_backspace, on_keypress};
-use crate::words::show_words;
 use crate::words::Status::Unmark;
 
 mod cursor_position;
@@ -60,17 +60,23 @@ fn main() {
     let args = Args::parse();
     init_ncurses();
     let timeframe_in_secs = args.timeframe;
-    let mut words =
-        words::shuffle_and_get_words(&args.words_list, args.min_word_length, args.max_word_length);
-    let mut cursor = CursorPosition::new();
+    let terminal_width = terminal_size().unwrap().0 .0;
+    let margin = 4;
+    let mut words = words::shuffle_and_get_words(
+        &args.words_list,
+        args.min_word_length,
+        args.max_word_length,
+        terminal_width as usize,
+    );
+    let mut cursor = CursorPosition::new(margin);
     let mut now = Instant::now();
     let mut did_start_typing = false;
     let mut correctly_pressed_letters = 0;
     let mut all_letter_pressed = 0;
 
-    show_words(&words, &mut cursor);
+    words.show_words(&mut cursor, terminal_width as usize);
+    refresh();
     while now.elapsed() < Duration::from_secs(timeframe_in_secs) || !did_start_typing {
-        refresh();
         let c = getch();
         if c != ERR {
             clear();
@@ -83,8 +89,8 @@ fn main() {
             }
 
             let mut did_mark_letter = false;
-            for i in 0..words.len() {
-                let word = &mut words[i];
+            for i in 0..words.data.len() {
+                let word = &mut words.data[i];
                 if word.completed {
                     continue;
                 }
@@ -92,8 +98,8 @@ fn main() {
                 if c as u8 == 127 {
                     // If on_backspace return false we have to modify word before him
                     if !on_backspace(word, &mut cursor) && i != 0 {
-                        words[i - 1].letters.last_mut().unwrap().status = Unmark;
-                        words[i - 1].completed = false;
+                        words.data[i - 1].letters.last_mut().unwrap().status = Unmark;
+                        words.data[i - 1].completed = false;
                         if cursor.get_x() == 0 {
                             cursor.go_back_to_old_line();
                         } else {
@@ -108,10 +114,11 @@ fn main() {
                         &args.words_list,
                         args.min_word_length,
                         args.max_word_length,
+                        terminal_width as usize,
                     );
                     did_start_typing = false;
                     now = Instant::now();
-                    cursor = CursorPosition::new();
+                    cursor = CursorPosition::new(margin);
                     correctly_pressed_letters = 0;
                     all_letter_pressed = 0;
                     break;
@@ -126,18 +133,18 @@ fn main() {
                     break;
                 }
             }
-            show_words(&words, &mut cursor);
+            words.show_words(&mut cursor, terminal_width as usize);
         }
     }
-    // Cleanup ncurses
     endwin();
 
     let average_word_length = words
+        .data
         .iter()
         .filter(|it| it.completed)
         .map(|it| it.letters.len())
         .sum::<usize>() as f64
-        / words.iter().filter(|it| it.completed).count() as f64;
+        / words.data.iter().filter(|it| it.completed).count() as f64;
     println!(
         "Accuracy {}%",
         ((correctly_pressed_letters as f64 / all_letter_pressed as f64) * 100.0) as i64
