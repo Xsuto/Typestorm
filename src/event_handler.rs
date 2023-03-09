@@ -17,8 +17,8 @@ pub fn on_keypress(
     c: char,
     did_mark_letter: &mut bool,
     cursor: &mut CursorPosition,
-    correctly_pressed_letters: &mut i32,
-    all_letter_pressed: &mut i32,
+    correctly_pressed_letters: &mut usize,
+    all_letter_pressed: &mut usize,
 ) -> bool {
     if *did_mark_letter {
         return true;
