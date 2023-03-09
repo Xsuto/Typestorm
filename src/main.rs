@@ -78,6 +78,7 @@ impl AppState {
                 args.min_word_length,
                 args.max_word_length,
                 terminal_width,
+                args.margin
             ),
             did_start_typing: false,
             now: Instant::now(),
@@ -94,6 +95,7 @@ impl AppState {
             self.args.min_word_length,
             self.args.max_word_length,
             self.terminal_width,
+            self.args.margin
         );
         self.did_start_typing = false;
         self.now = Instant::now();
@@ -110,7 +112,7 @@ fn main() {
     let timeframe_in_secs = args.timeframe;
     let mut state = AppState::new(args,terminal_width as usize);
     init_ncurses();
-    state.words.show_words(&mut state.cursor, terminal_width as usize);
+    state.words.show_words(&mut state.cursor, state.terminal_width);
     while state.now.elapsed() < Duration::from_secs(timeframe_in_secs) || !state.did_start_typing {
         let c = getch();
         if c != ERR {
@@ -158,7 +160,7 @@ fn main() {
                     break;
                 }
             }
-            state.words.show_words(&mut state.cursor, terminal_width as usize);
+            state.words.show_words(&mut state.cursor, state.terminal_width);
         }
     }
     endwin();

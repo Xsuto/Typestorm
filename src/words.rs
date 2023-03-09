@@ -40,8 +40,7 @@ pub struct Words {
 }
 
 impl Words {
-    pub fn new(data: Vec<Word>, terminal_size: usize) -> Self {
-        let margin = 4;
+    pub fn new(data: Vec<Word>, terminal_size: usize, margin: usize) -> Self {
         let mut end = 0;
         let mut it = 0;
         for word in data.iter() {
@@ -122,6 +121,7 @@ pub fn shuffle_and_get_words(
     min_word_length: usize,
     max_word_length: usize,
     terminal_width: usize,
+    margin: usize
 ) -> Words {
     let mut words = match words_list {
         WordsList::English => Vec::from(crate::english_words::WORDS),
@@ -149,7 +149,7 @@ pub fn shuffle_and_get_words(
             }
         })
         .collect::<Vec<Word>>();
-    Words::new(data, terminal_width)
+    Words::new(data, terminal_width,margin)
 }
 
 fn show_correct_letter(word: char) {
