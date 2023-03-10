@@ -1,8 +1,9 @@
-use ncurses::{addstr, attron, refresh, COLOR_PAIR};
+use lazy_static::lazy_static;
+use ncurses::{addstr, attron, COLOR_PAIR, refresh};
 use rand::seq::SliceRandom;
 
-use crate::cursor_position::CursorPosition;
 use crate::{ColorsPair, WordsList};
+use crate::cursor_position::CursorPosition;
 
 #[derive(PartialEq, Debug)]
 pub enum Status {
@@ -170,8 +171,11 @@ fn show_wrong_letter(word: char) {
     attron(COLOR_PAIR(ColorsPair::White as i16));
 }
 
+lazy_static! {
+    static ref MARGIN: String = String::from(" ").repeat(1024);
+}
+
 fn show_margin(margin: usize) {
-    // Not ideal should save somewhere that string
-    let margin = String::from(" ").repeat(margin);
-    addstr(&margin);
+    // NOTE: Program will crash if margin is bigger then 1024 but I is not a realistic scenario.
+    addstr(&MARGIN[0..margin]);
 }
