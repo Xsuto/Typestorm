@@ -1,13 +1,15 @@
+use std::ffi::c_int;
 use std::time::{Duration, Instant};
 
 use clap::Parser;
+use libc::SIGINT;
 use ncurses::*;
 use terminal_size::terminal_size;
 
 use crate::cursor_position::CursorPosition;
 use crate::event_handler::{on_backspace, on_keypress};
-use crate::words::Status::Unmark;
 use crate::words::{shuffle_and_get_words, Words};
+use crate::words::Status::Unmark;
 
 mod cursor_position;
 mod english1k_words;
@@ -105,13 +107,23 @@ impl AppState {
     }
 }
 
+extern "C" fn handle_signal(_: c_int) {
+    // Clean up ncurses here
+    ncurses::endwin();
+    std::process::exit(0);
+}
 
 fn main() {
     let args = Args::parse();
-    let terminal_width = terminal_size().unwrap().0 .0;
+    let terminal_width = terminal_size().unwrap().0.0;
     let timeframe_in_secs = args.timeframe;
-    let mut state = AppState::new(args,terminal_width as usize);
+    let mut state = AppState::new(args, terminal_width as usize);
     init_ncurses();
+    // Install signal handler for interrupt signal
+    unsafe {
+        libc::signal(SIGINT, handle_signal as usize);
+    }
+
     state.words.show_words(&mut state.cursor, state.terminal_width);
     while state.now.elapsed() < Duration::from_secs(timeframe_in_secs) || !state.did_start_typing {
         let c = getch();
